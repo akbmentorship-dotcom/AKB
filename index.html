@@ -100,7 +100,7 @@ else e.setAttribute(k,v);
 }
 for(const c of[].concat(ch)){
 if(c==null||c===false)continue;
-e.appendChild(typeof c==='string'?document.createTextNode(c):c);
+e.appendChild(c instanceof Node?c:document.createTextNode(String(c)));
 }
 return e;
 };
