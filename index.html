@@ -201,8 +201,10 @@ const CNAV=[
 {id:'clients',lbl:'🤝 Clients'},
 {id:'partners',lbl:'⚡ Partners'},
 {id:'content',lbl:'🎬 Content'},
+{id:'meetings',lbl:'📋 Meetings'},
+{id:'review',lbl:'🔍 Review'},
 ];
-const TITLES={dashboard:'Align Living',growth:'Growth Log',workout:'Workout',pipeline:'Pipeline',tasks:'Tasks',clients:'Client CRM',partners:'AKB Partners',content:'Content',links:'Apps'};
+const TITLES={dashboard:'Align Living',growth:'Growth Log',workout:'Workout',pipeline:'Pipeline',tasks:'Tasks',clients:'Client CRM',partners:'AKB Partners',content:'Content',meetings:'Meetings',review:'Review',links:'Apps'};
 
 let curView='dashboard';
 function go(id){
@@ -215,7 +217,7 @@ render(id);
 function render(id){
 const c=$('content');
 c.innerHTML='';c.scrollTop=0;
-({dashboard:rDash,growth:rGrowth,workout:rWorkout,pipeline:rPipeline,tasks:rTasks,clients:rClients,partners:rPartners,content:rContent,links:rLinks}[id]||noop)();
+({dashboard:rDash,growth:rGrowth,workout:rWorkout,pipeline:rPipeline,tasks:rTasks,clients:rClients,partners:rPartners,content:rContent,meetings:rMeetings,review:rReview,links:rLinks}[id]||noop)();
 }
 const noop=()=>{};
 
@@ -431,7 +433,7 @@ div({css:`font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:up
 ]));
 
 const stb=div({cls:'subtabs'},[]);
-[{id:'warmup',lbl:'Warmup'},{id:'track',lbl:'Track'},{id:'history',lbl:'History'}].forEach(tb=>{
+[{id:'track',lbl:'Log Session'},{id:'warmup',lbl:'Warmup'},{id:'history',lbl:'History'}].forEach(tb=>{
 const act=tb.id===wTab;
 const b=btn({cls:'stab'+(act?' active':''),css:act?`background:${day.dim};border-color:${day.brd};color:${day.cv}`:'',
 '@click':()=>{wTab=tb.id;rWorkout();}
@@ -582,9 +584,8 @@ c.appendChild(hc);
 // ══ PIPELINE
 let pipTab='daily';
 const PM=[
-{id:'ig_convos',lbl:'IG Convos Started',icon:'📸',cv:'#f05a1a',t:3},
+{id:'ig_accounts',lbl:'Instagram Accounts Reached',icon:'📸',cv:'#f05a1a',t:3},
 {id:'bb_convos',lbl:'Bumble Biz Convos',icon:'🐝',cv:'#f5a623',t:3},
-{id:'drop_messages',lbl:'Drop Messages Sent',icon:'📩',cv:'#3a9de8',t:7},
 {id:'vetting',lbl:'Vetting Meetings',icon:'🤝',cv:'#3ecf82',outcome:true},
 {id:'partners_new',lbl:'New Partners Added',icon:'⚡',cv:'#9d6ef5',outcome:true},
 ];
@@ -843,8 +844,148 @@ const CD=[
 const BCO={'feels':'#e84040','sees':'#f5a623','gets':'#3ecf82'};
 const BLO={'feels':'🔴 He Feels It','sees':'🟡 He Sees It','gets':'🟢 He Gets It'};
 
+let contentTab='plan';
 function rContent(){
-const c=$('content');
+const c=$('content');c.innerHTML='';c.scrollTop=0;
+const stb=div({cls:'subtabs'},[]);
+[{id:'plan',lbl:'Plan'},{id:'log',lbl:'Log'},{id:'ideas',lbl:'Ideas'},{id:'playbook',lbl:'Playbook'}].forEach(tb=>{
+const act=tb.id===contentTab;
+stb.appendChild(btn({cls:'stab'+(act?' active':''),css:act?'background:var(--orange-dim);border-color:var(--orange-border);color:var(--orange)':'','@click':()=>{contentTab=tb.id;rContent();}},[tb.lbl]));
+});
+c.appendChild(stb);
+if(contentTab==='plan')rContentPlan(c);
+else if(contentTab==='log')rContentLog(c);
+else if(contentTab==='ideas')rContentIdeas(c);
+else rContentPlaybook(c);
+}
+
+function rContentPlan(c){
+const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const wStart=wk();
+const plan=S.get('content:plan:'+wStart)||{};
+c.appendChild(sh('Weekly Content Plan — w/o '+wStart,'var(--orange)'));
+DAYS.forEach((d,i)=>{
+const dc=card({},[]);
+dc.appendChild(div({css:'font-weight:700;font-size:13px;margin-bottom:8px;color:var(--orange)'},[d]));
+['Film','Post','Idea'].forEach(field=>{
+const key=d+'_'+field;
+dc.appendChild(mk('label',{cls:'lbl'},[field]));
+const el=inp({id:'cp_'+key,placeholder:field==='Idea'?'Content idea or hook...':field==='Film'?'What to film today...':'What to post...'});
+el.value=plan[key]||'';
+el.addEventListener('input',()=>{
+const cur=S.get('content:plan:'+wStart)||{};
+cur[key]=el.value;
+S.set('content:plan:'+wStart,cur);
+});
+dc.appendChild(el);
+});
+c.appendChild(dc);
+});
+}
+
+function rContentLog(c){
+const today=td();
+const logs=S.get('content:logs')||[];
+c.appendChild(sh("Today's Log — "+today,'var(--green)'));
+const addCard=card({},[]);
+addCard.appendChild(mk('label',{cls:'lbl'},['What did you do today?']));
+const typeEl=mk('select',{cls:'inp',css:'margin-bottom:8px;cursor:pointer'},[]);
+['Filmed','Posted','Edited','Planned','Outreach','Other'].forEach(t=>{
+typeEl.appendChild(mk('option',{value:t},[t]));
+});
+addCard.appendChild(typeEl);
+addCard.appendChild(mk('label',{cls:'lbl'},['Notes / Details']));
+const notesEl=ta({placeholder:'What content? Any ideas that came up? Metrics?',css:'min-height:80px'});
+addCard.appendChild(notesEl);
+addCard.appendChild(btn({cls:'save-btn',css:'background:var(--green-dim);border-color:var(--green-border);color:var(--green);margin-top:12px','@click':()=>{
+const v=notesEl.value.trim();
+if(!v)return;
+const entry={id:Date.now().toString(),date:today,type:typeEl.value,notes:v};
+S.set('content:logs',[entry,...(S.get('content:logs')||[])]);
+notesEl.value='';
+rContent();
+}},['+ Log Entry']));
+c.appendChild(addCard);
+const recent=[...(S.get('content:logs')||[])].slice(0,30);
+if(recent.length){
+c.appendChild(sh('Recent Entries','var(--muted)'));
+recent.forEach(e=>{
+const ec=card({css:'display:flex;gap:10px;align-items:flex-start'},[]);
+ec.appendChild(div({css:'min-width:64px'},[
+div({css:'font-size:11px;font-weight:700;color:var(--green)'},[e.type]),
+div({css:'font-size:10px;color:var(--muted);margin-top:2px'},[e.date]),
+]));
+ec.appendChild(div({css:'flex:1;font-size:13px;color:var(--light);line-height:1.5'},[e.notes]));
+ec.appendChild(btn({css:'background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0;flex-shrink:0','@click':()=>{
+if(confirm('Delete this entry?')){S.set('content:logs',(S.get('content:logs')||[]).filter(x=>x.id!==e.id));rContent();}
+}},['×']));
+c.appendChild(ec);
+});
+}
+}
+
+function rContentIdeas(c){
+const ideas=S.get('content:ideas')||[];
+c.appendChild(sh('Idea Bank','var(--purple)'));
+const addCard=card({},[]);
+addCard.appendChild(mk('label',{cls:'lbl'},['Idea / Hook']));
+const ideaTa=ta({placeholder:'What\'s the hook? Who is it for? What format?',css:'min-height:70px'});
+addCard.appendChild(ideaTa);
+addCard.appendChild(mk('label',{cls:'lbl'},['Format']));
+const fmtEl=mk('select',{cls:'inp',css:'cursor:pointer'},[]);
+['Reel','Carousel','Story','Long-form','Talking Head','Voiceover','Other'].forEach(f=>{
+fmtEl.appendChild(mk('option',{value:f},[f]));
+});
+addCard.appendChild(fmtEl);
+addCard.appendChild(btn({cls:'save-btn',css:'background:var(--purple-dim);border-color:var(--purple-border);color:var(--purple);margin-top:12px','@click':()=>{
+const v=ideaTa.value.trim();
+if(!v)return;
+const idea={id:Date.now().toString(),date:td(),idea:v,format:fmtEl.value,used:false};
+S.set('content:ideas',[idea,...(S.get('content:ideas')||[])]);
+ideaTa.value='';
+rContent();
+}},['Save Idea']));
+c.appendChild(addCard);
+if(ideas.length){
+const unused=ideas.filter(i=>!i.used);
+const used=ideas.filter(i=>i.used);
+if(unused.length){
+c.appendChild(sh('Ideas to Use — '+unused.length,'var(--purple)'));
+unused.forEach(idea=>{
+const ic=card({css:'display:flex;gap:10px;align-items:flex-start'},[]);
+ic.appendChild(div({css:'flex:1'},[
+div({css:'font-size:13px;font-weight:600;line-height:1.4;margin-bottom:4px'},[idea.idea]),
+div({css:'display:flex;gap:6px;margin-top:6px;flex-wrap:wrap'},[
+mk('span',{css:'font-size:10px;background:#1a1a1a;color:var(--muted);padding:2px 8px;border-radius:3px'},[idea.format]),
+mk('span',{css:'font-size:10px;color:var(--muted)'},[idea.date]),
+]),
+]));
+ic.appendChild(div({css:'display:flex;flex-direction:column;gap:4px;flex-shrink:0'},[
+btn({css:'background:var(--green-dim);border:1px solid var(--green-border);color:var(--green);border-radius:5px;font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer','@click':()=>{
+S.set('content:ideas',(S.get('content:ideas')||[]).map(x=>x.id===idea.id?{...x,used:true}:x));rContent();
+}},['✓ Used']),
+btn({css:'background:none;border:none;color:var(--muted);font-size:15px;cursor:pointer;padding:0','@click':()=>{
+if(confirm('Delete idea?')){S.set('content:ideas',(S.get('content:ideas')||[]).filter(x=>x.id!==idea.id));rContent();}
+}},['×']),
+]));
+c.appendChild(ic);
+});
+}
+if(used.length){
+c.appendChild(sh('Used — '+used.length,'var(--muted)'));
+used.forEach(idea=>{
+const ic=card({css:'opacity:0.5'},[]);
+ic.appendChild(div({css:'font-size:13px;line-height:1.4'},[idea.idea]));
+ic.appendChild(div({css:'display:flex;gap:6px;margin-top:4px'},[
+mk('span',{css:'font-size:10px;background:#1a1a1a;color:var(--muted);padding:2px 8px;border-radius:3px'},[idea.format]),
+]));
+c.appendChild(ic);
+});
+}
+} else c.appendChild(div({css:'text-align:center;color:var(--muted);padding:40px 20px;font-size:14px'},['No ideas saved yet. Add your first one above.']));
+}
+
+function rContentPlaybook(c){
 const weeks=[
 {lbl:'Week 1 — Return & Tension',days:CD.filter(d=>d.n<=18)},
 {lbl:'Week 2 — Pursuit & Tools',days:CD.filter(d=>d.n>=19&&d.n<=25)},
@@ -987,6 +1128,179 @@ if(confirm('Delete this task?')){S.set('tasks',(S.get('tasks')||[]).filter(x=>x.
 }},['Delete']));
 fc.appendChild(btnsD);
 c.appendChild(fc);
+}
+
+// ══ MEETINGS
+const MTYPES=[
+{id:'vetting',lbl:'Vetting / Prospect Call',icon:'🔍',cv:'#f05a1a'},
+{id:'partner',lbl:'Partner Check-In',icon:'⚡',cv:'#9d6ef5'},
+{id:'client',lbl:'Client Call',icon:'🤝',cv:'#3ecf82'},
+{id:'strategy',lbl:'Strategy / Planning',icon:'🧠',cv:'#3a9de8'},
+];
+let meetTab='list';
+function rMeetings(){
+const c=$('content');c.innerHTML='';c.scrollTop=0;
+const stb=div({cls:'subtabs'},[]);
+[{id:'list',lbl:'Log'},{id:'add',lbl:'+ New'}].forEach(tb=>{
+const act=tb.id===meetTab;
+stb.appendChild(btn({cls:'stab'+(act?' active':''),css:act?'background:var(--green-dim);border-color:var(--green-border);color:var(--green)':'','@click':()=>{meetTab=tb.id;rMeetings();}},[tb.lbl]));
+});
+c.appendChild(stb);
+if(meetTab==='add')rMeetForm(c,null);
+else if(meetTab.startsWith('view:'))rMeetForm(c,null);
+else rMeetList(c);
+}
+function rMeetList(c){
+const meetings=S.get('meetings')||[];
+if(!meetings.length){
+c.appendChild(div({css:'text-align:center;color:var(--muted);padding:40px 20px;font-size:14px'},['No meetings logged yet. Tap + New to add one.']));
+return;
+}
+const byType={};
+MTYPES.forEach(t=>{byType[t.id]=meetings.filter(m=>m.type===t.id);});
+MTYPES.forEach(mt=>{
+const list=byType[mt.id];
+if(!list.length)return;
+c.appendChild(sh(mt.icon+' '+mt.lbl,'var(--muted)'));
+list.forEach(m=>{
+const mc=card({cls:'card tap','@click':()=>{meetTab='view:'+m.id;rMeetings();}},[]);
+mc.appendChild(div({css:'display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px'},[
+div({css:`font-weight:700;font-size:14px;color:${mt.cv}`},[m.who||'(no name)']),
+div({css:'font-size:11px;color:var(--muted)'},[m.date]),
+]));
+if(m.topics)mc.appendChild(div({css:'font-size:13px;color:var(--light);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden'},[m.topics]));
+if(m.followup)mc.appendChild(div({css:'margin-top:6px;font-size:11px;color:var(--yellow);font-weight:600'},['→ '+m.followup]));
+c.appendChild(mc);
+});
+});
+}
+function rMeetForm(c,meet){
+if(typeof meetTab==='string'&&meetTab.startsWith('view:')){
+const id=meetTab.split(':')[1];
+const m=(S.get('meetings')||[]).find(x=>x.id===id);
+if(!m){meetTab='list';rMeetings();return;}
+const mt=MTYPES.find(t=>t.id===m.type)||MTYPES[0];
+c.appendChild(btn({cls:'back','@click':()=>{meetTab='list';rMeetings();}},['← Back']));
+c.appendChild(card({css:`border-color:${mt.cv}33`},[
+div({css:'display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px'},[
+div({},[div({css:`font-size:11px;font-weight:700;color:${mt.cv};letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px`},[mt.icon+' '+mt.lbl]),div({css:'font-size:18px;font-weight:800'},[m.who||'(no name)'])]),
+div({css:'font-size:12px;color:var(--muted);text-align:right'},[m.date]),
+]),
+]));
+[['Topics Covered',m.topics,'var(--blue)'],['Takeaways',m.takeaways,'var(--green)'],['Follow-Up Actions',m.followup,'var(--yellow)'],['Notes',m.notes,'var(--muted)']].forEach(([lbl,val,col])=>{
+if(!val)return;
+c.appendChild(sh(lbl,col));
+c.appendChild(card({},[div({css:'font-size:14px;line-height:1.6;white-space:pre-wrap'},[val])]));
+});
+c.appendChild(btn({cls:'btn btn-sm',css:'background:var(--red-dim);border-color:var(--red-border);color:var(--red);margin-top:8px','@click':()=>{
+if(confirm('Delete this meeting log?')){S.set('meetings',(S.get('meetings')||[]).filter(x=>x.id!==id));meetTab='list';rMeetings();}
+}},['Delete']));
+return;
+}
+const fc=card({},[]);
+fc.appendChild(sh(meet?'Edit Meeting':'New Meeting Log','var(--green)'));
+fc.appendChild(mk('label',{cls:'lbl'},['Meeting Type']));
+const typeEl=mk('select',{cls:'inp',css:'cursor:pointer;margin-bottom:4px'},[]);
+MTYPES.forEach(t=>{
+const o=mk('option',{value:t.id},[t.icon+' '+t.lbl]);
+if(meet&&meet.type===t.id)o.setAttribute('selected','selected');
+typeEl.appendChild(o);
+});
+fc.appendChild(typeEl);
+fc.appendChild(mk('label',{cls:'lbl'},['Date']));
+const dateEl=inp({type:'date'});
+dateEl.value=meet?meet.date:td();
+fc.appendChild(dateEl);
+fc.appendChild(mk('label',{cls:'lbl'},['Who with? (name/company)']));
+const whoEl=inp({placeholder:'e.g. Sarah — Momentum Fitness'});
+whoEl.value=meet?meet.who:'';
+fc.appendChild(whoEl);
+fc.appendChild(mk('label',{cls:'lbl'},['Topics Covered']));
+const topicsEl=ta({placeholder:'What did you discuss?',css:'min-height:80px'});
+topicsEl.value=meet?meet.topics:'';
+fc.appendChild(topicsEl);
+fc.appendChild(mk('label',{cls:'lbl'},['Key Takeaways']));
+const takeEl=ta({placeholder:'What were the main insights or outcomes?',css:'min-height:80px'});
+takeEl.value=meet?meet.takeaways:'';
+fc.appendChild(takeEl);
+fc.appendChild(mk('label',{cls:'lbl'},['Follow-Up Actions']));
+const followEl=ta({placeholder:'What needs to happen next? Who does it?',css:'min-height:60px'});
+followEl.value=meet?meet.followup:'';
+fc.appendChild(followEl);
+fc.appendChild(mk('label',{cls:'lbl'},['Extra Notes']));
+const notesEl=ta({placeholder:'Anything else...',css:'min-height:60px'});
+notesEl.value=meet?meet.notes:'';
+fc.appendChild(notesEl);
+fc.appendChild(btn({cls:'save-btn',css:'background:var(--green-dim);border-color:var(--green-border);color:var(--green);margin-top:12px','@click':()=>{
+const f={type:typeEl.value,date:dateEl.value,who:whoEl.value.trim(),topics:topicsEl.value.trim(),takeaways:takeEl.value.trim(),followup:followEl.value.trim(),notes:notesEl.value.trim()};
+const all=S.get('meetings')||[];
+if(meet){S.set('meetings',all.map(x=>x.id===meet.id?{...f,id:meet.id}:x));}
+else{S.set('meetings',[{...f,id:Date.now().toString(),createdAt:td()},...all]);}
+meetTab='list';rMeetings();
+}},['Save Meeting']));
+c.appendChild(fc);
+}
+
+// ══ REVIEW
+const RREVIEWS=[
+{id:'weekly',lbl:'Weekly Overall',icon:'📅',col:'var(--orange)',prompts:[
+'What were my 3 biggest wins this week?',
+'What fell short — and why?',
+'What drained my energy most?',
+'What one thing would have made this week 10x better?',
+'What habit or behavior do I need to commit to next week?',
+]},
+{id:'content',lbl:'Content Performance',icon:'🎬',col:'var(--yellow)',prompts:[
+'Which content performed best this week? Why did it work?',
+'Which post underperformed — what would I change?',
+'Am I staying consistent with my posting schedule?',
+'What content idea has been sitting too long without action?',
+'What type of content should I do more of?',
+]},
+{id:'pipeline',lbl:'Pipeline / Outreach',icon:'🔥',col:'var(--blue)',prompts:[
+'How many new conversations did I start this week (IG + Bumble Biz)?',
+'Which conversations are moving toward a meeting?',
+'Am I hitting my 3 IG / 3 BB targets each week?',
+'What outreach approach got the best response?',
+'Who should I be following up with right now?',
+]},
+{id:'meetings',lbl:'Meetings & Conversations',icon:'🤝',col:'var(--green)',prompts:[
+'How many meetings did I have this week? What types?',
+'Which meeting had the biggest potential outcome?',
+'Did I follow up on every meeting action item?',
+'What pattern am I seeing in vetting calls — what objections keep coming up?',
+'What relationship needs more attention this week?',
+]},
+];
+let reviewTab='weekly';
+function rReview(){
+const c=$('content');c.innerHTML='';c.scrollTop=0;
+const stb=div({cls:'subtabs'},[]);
+RREVIEWS.forEach(r=>{
+const act=r.id===reviewTab;
+stb.appendChild(btn({cls:'stab'+(act?' active':''),css:act?`background:${r.col}18;border-color:${r.col}44;color:${r.col}`:'','@click':()=>{reviewTab=r.id;rReview();}},[r.icon]));
+});
+c.appendChild(stb);
+const rev=RREVIEWS.find(r=>r.id===reviewTab);
+c.appendChild(sh(rev.icon+' '+rev.lbl,rev.col));
+const wStart=wk();
+const savedKey='review:'+reviewTab+':'+wStart;
+const saved=S.get(savedKey)||{};
+rev.prompts.forEach((prompt,i)=>{
+const pc=card({},[]);
+pc.appendChild(div({css:`font-size:13px;font-weight:700;line-height:1.5;margin-bottom:10px;color:${rev.col}`},[prompt]));
+const ta_el=ta({placeholder:'Write your honest answer here...',css:'min-height:80px'});
+ta_el.value=saved[i]||'';
+ta_el.addEventListener('input',()=>{
+const cur=S.get(savedKey)||{};
+cur[i]=ta_el.value;
+S.set(savedKey,cur);
+});
+pc.appendChild(ta_el);
+c.appendChild(pc);
+});
+const weekEl=div({css:'text-align:center;color:var(--muted);font-size:11px;padding:8px 0 4px'},['Week of '+wStart+' — auto-saved']);
+c.appendChild(weekEl);
 }
 
 function rLinks(){
