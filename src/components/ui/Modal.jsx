@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 export default function Modal({ open, onClose, title, children }) {
   useEffect(() => {
@@ -9,7 +10,7 @@ export default function Modal({ open, onClose, title, children }) {
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-sheet" onClick={e => e.stopPropagation()}>
         <div className="modal-handle" />
@@ -18,6 +19,7 @@ export default function Modal({ open, onClose, title, children }) {
         )}
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
