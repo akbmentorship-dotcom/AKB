@@ -1,10 +1,18 @@
-export const getToday = () => new Date().toISOString().split('T')[0];
+// Local-timezone date string YYYY-MM-DD
+const localFmt = (d) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
+export const getToday = () => localFmt(new Date());
 
 export const getWeekKey = () => {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
   d.setDate(d.getDate() - d.getDay());
-  return d.toISOString().split('T')[0];
+  return localFmt(d);
 };
 
 export const formatDate = (s) => {
@@ -23,25 +31,20 @@ export const daysSince = (s) => {
   return Math.floor((Date.now() - new Date(s + 'T12:00:00')) / 864e5);
 };
 
-// Returns a status color based on percentage
 export const statusColor = (pct) =>
   pct >= 100 ? 'var(--green)' : pct >= 60 ? 'var(--yellow)' : 'var(--red)';
 
-// Returns progress percentage capped at 100
 export const getPct = (val, target) => Math.min(100, Math.round((val / target) * 100));
 
-// Get day-of-week abbreviation for a date string YYYY-MM-DD
 export const getDayOfWeek = (dateStr) => {
   const d = new Date(dateStr + 'T12:00:00');
   return ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][d.getDay()];
 };
 
-// Get today's day-of-week abbreviation
 export const getTodayDow = () => getDayOfWeek(getToday());
 
-// Offset a YYYY-MM-DD string by N days
 export const addDays = (dateStr, n) => {
   const d = new Date(dateStr + 'T12:00:00');
   d.setDate(d.getDate() + n);
-  return d.toISOString().split('T')[0];
+  return localFmt(d);
 };
