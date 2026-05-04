@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - master
+      - claude/scheduling-aggregator-demo-HPacd
   workflow_dispatch:
 
 permissions:
