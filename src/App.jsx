@@ -5,13 +5,15 @@ import Pipeline from './pages/Pipeline/index.jsx';
 import Tasks from './pages/Tasks/index.jsx';
 import Habits from './pages/Habits/index.jsx';
 import Fitness from './pages/Fitness/index.jsx';
+import Scheduling from './pages/Scheduling/index.jsx';
 
 const PAGE_TITLES = {
-  dashboard: 'Align Living',
-  pipeline:  'Pipeline',
-  tasks:     'Tasks',
-  habits:    'Habits',
-  fitness:   'Fitness',
+  dashboard:  'Align Living',
+  pipeline:   'Pipeline',
+  tasks:      'Tasks',
+  habits:     'Habits',
+  fitness:    'Fitness',
+  scheduling: 'Schedule',
 };
 
 export default function App() {
@@ -31,11 +33,12 @@ export default function App() {
       </header>
 
       <main className="content">
-        {page === 'dashboard' && <Dashboard onNav={setPage} />}
-        {page === 'pipeline'  && <Pipeline />}
-        {page === 'tasks'     && <Tasks />}
-        {page === 'habits'    && <Habits />}
-        {page === 'fitness'   && <Fitness />}
+        {page === 'dashboard'  && <Dashboard onNav={setPage} />}
+        {page === 'pipeline'   && <Pipeline />}
+        {page === 'tasks'      && <Tasks />}
+        {page === 'habits'     && <Habits />}
+        {page === 'fitness'    && <Fitness />}
+        {page === 'scheduling' && <Scheduling />}
       </main>
 
       <BottomNav active={page} onNav={setPage} />

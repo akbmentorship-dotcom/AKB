@@ -1,9 +1,10 @@
 const TABS = [
-  { id: 'dashboard', icon: '⚡', label: 'Home' },
-  { id: 'pipeline',  icon: '🔥', label: 'Pipeline' },
-  { id: 'tasks',     icon: '📝', label: 'Tasks' },
-  { id: 'habits',    icon: '✓',  label: 'Habits' },
-  { id: 'fitness',   icon: '💪', label: 'Fitness' },
+  { id: 'dashboard',  icon: '⚡', label: 'Home'     },
+  { id: 'pipeline',   icon: '🔥', label: 'Pipeline' },
+  { id: 'tasks',      icon: '📝', label: 'Tasks'    },
+  { id: 'habits',     icon: '✓',  label: 'Habits'   },
+  { id: 'fitness',    icon: '💪', label: 'Fitness'  },
+  { id: 'scheduling', icon: '📅', label: 'Schedule' },
 ];
 
 export default function BottomNav({ active, onNav }) {
